@@ -6,7 +6,7 @@
   </controls>
   <action>
     <workflow>
-      <app-path>${nameNode}/user/svcconsumerengdev/test/feed/RailJobFeedEnrichmentWorkflow</app-path>
+      <app-path>${nameNode}/user/svcconsumerengdev/rails-job-feed-spark-export/feed/RailJobFeedEnrichmentWorkflow</app-path>
     </workflow>
   </action>
 </coordinator-app>
