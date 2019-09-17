@@ -2,16 +2,18 @@ const js2xmlparser = require("js2xmlparser");
 const AWS = require("aws-sdk");
 const csvjson = require("csvjson");
 const moment = require("moment");
+const config = require('./config.json')
 
 AWS.config.setPromisesDependency();
 AWS.config.update({
-  accessKeyId: "AKIA3DJYAK54CYYBDG2T",
-  secretAccessKey: "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",
+  accessKeyId: config.accessKeyId,
+  secretAccessKey: config.secretKeyId,
   region: "us-east-2"
 });
 const s3 = new AWS.S3();
 
-exports.handler =   async function(){
+// exports.handler =   async function(){
+    async function t(){
   let key = await getKeyS3();
   if (key) {
     let obj = s3.getObject(
@@ -103,3 +105,5 @@ function prepareXML(data) {
   );
   return data;
 }
+
+t()
