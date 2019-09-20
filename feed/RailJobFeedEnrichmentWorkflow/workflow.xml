@@ -24,7 +24,6 @@
         <argument>feed_1</argument>
         <argument>1</argument>
         <file>feed_to_s3.sh</file>
-        <file>feed.xslt</file>
       </shell>
       <ok to="success_1"/>
       <error to="fail_1"/>
