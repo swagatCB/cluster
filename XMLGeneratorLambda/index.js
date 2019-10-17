@@ -1,12 +1,13 @@
 const js2xmlparser = require("js2xmlparser");
 const AWS = require("aws-sdk");
 const csvjson = require("csvjson");
+const config = require('./config.json');
 const moment = require("moment-timezone");
 
 AWS.config.setPromisesDependency();
 AWS.config.update({
-  accessKeyId: "AKIA3DJYAK54CYYBDG2T",
-  secretAccessKey: "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",
+  accessKeyId: config.accessKeyId,
+  secretAccessKey: config.secretKeyId,
   region: "us-east-2"
 });
 const s3 = new AWS.S3();
@@ -113,6 +114,8 @@ async function prepareXML(res) {
   let sitemapContent =
     "<sitemapindex xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>";
   for (index = 0; index < arr.length; index++) {
+    console.log(index);
+    
     let feed = arr[index];
     let path = "xml/" + index + ".xml";
     sitemapContent +=
@@ -123,9 +126,11 @@ async function prepareXML(res) {
     await uploadXml(path, t);
   }
   sitemapContent += "</sitemapindex>";
+console.log('check');
+  
   await uploadXml("xml/job-sitemap.xml", sitemapContent);
 }
-controller()
-exports.handler = async function() {
+exports.handler = async function(context) {
   await controller();
+  return context.logStreamName;
 };
