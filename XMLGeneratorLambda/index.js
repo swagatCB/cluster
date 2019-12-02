@@ -8,9 +8,9 @@ const http = require('http');
 
 AWS.config.setPromisesDependency();
 AWS.config.update({
-  accessKeyId: config.accessKeyId,
-  secretAccessKey: config.secretKeyId,
-  region: "us-east-2"
+  // accessKeyId: config.accessKeyId,
+  // secretAccessKey: config.secretKeyId,
+  // region: "us-east-2"
 });
 
 const s3 = new AWS.S3();

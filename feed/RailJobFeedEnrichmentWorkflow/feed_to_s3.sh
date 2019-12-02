@@ -1,1 +1,0 @@
-spark2-submit /opt/hadoop/jar/sparkexport/Spark2Export.jar -d SiteData --s3 -p 1 -B rails-job-feed -P csv/ -q "SELECT did as loc,to_utc_timestamp(modified,'EST') as lastmod FROM sitedata.hhjob WHERE hostsite='US' AND status = 0 AND upgradelist NOT IN ('JCINT0','JCPRV0') AND classlist NOT LIKE '%DMYES%'" -C aws_s3_anand --truncate --bps 1000000
