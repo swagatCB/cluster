@@ -3,6 +3,8 @@ const AWS = require("aws-sdk");
 const csvjson = require("csvjson");
 const config = require('./config.json');
 const moment = require("moment-timezone");
+const http = require('http');
+
 
 AWS.config.setPromisesDependency();
 AWS.config.update({
@@ -10,50 +12,142 @@ AWS.config.update({
   secretAccessKey: config.secretKeyId,
   region: "us-east-2"
 });
+
 const s3 = new AWS.S3();
 
 async function controller() {
-  let key = await getKeyS3();
-console.log("Key --> "+key);
+  let key = await getKeyS3();//1
+  console.log("Key --> " + key);
 
-  try{
-  if (key) {
-    let res = await getCSV(key);
-    await prepareXML(res);
+  try {
+    if (key) {
+      let res = await getCSV(key);//2
+      // await prepareXML(res);
+      await CSVParser(res).then((val)=>{
+        forLoopingOverCSV(val);
+      })
+
+
+    }
   }
-}
-catch(err){
-console.log('Error occured while preparing XML',err);
-}
+  catch (err) {
+    console.log('Error occured while preparing XML', err);
+  }
 
 }
 
 async function getKeyS3() {
   let response = await s3
     .listObjectsV2({
-      Bucket: "rails-job-feed",
+      Bucket: "consumer-cloudops",
       Prefix: "csv"
     })
     .promise();
-  return response.Contents.length > 0 ? response.Contents[0].Key: null;
+  return response.Contents.length > 0 ? response.Contents[0].Key : null;
 }
 
 async function getCSV(key) {
   return new Promise(resolve => {
     s3.getObject(
       {
-        Bucket: "rails-job-feed",
+        Bucket: "consumer-cloudops",
         Key: key
       },
       (err, response) => {
         if (err) {
-          
+
         }
         resolve(response);
       }
     );
   });
 }
+
+function CSVParser(csv) {
+  //loop over csv and return an array
+  return new Promise((res, rej)=>{
+
+  })
+}
+
+/**promise.all can be used but with .then the promise will return undefined 
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all
+ * 
+ */
+function forLoopingOverCSV(emailArray) {
+  return new Promise((resolve, reject)=>{
+    let request;
+    for (let i = 0; i < emailArray.length; i++) {
+      new Promise((res, rej)=>{
+        let options = {
+          url: endpoint, //https://api.careerbuilder.com/core/bounce/hard
+          headers: { Authorization: "Bearer" + token, "request- id": _requestId },
+          json: true,
+          body: { Email: emailArray[i] }, //JSON.stringify might be used,
+          method: 'POST'
+        };
+  
+        res(options);
+  
+      }).then((val)=>{
+        request = http.request(val, (res)=> {//request variable has higher scope in this method
+          console.log('STATUS: ' + res.statusCode);
+          console.log('HEADERS: ' + JSON.stringify(res.headers));
+          res.setEncoding('utf8');
+          res.on('data', function (chunk) {
+            console.log('BODY: ' + chunk);
+          });
+        });
+        
+      }).then(()=>{
+        request.on('error', (e)=>{
+          console.log('problem with request: ' + e.message);
+        });
+      }).catch((error)=>{
+        reject({message:`failed for email ${emailArray[i]}`, Error : error})
+      })
+    
+      
+    }
+    resolve({"done with email" : emailArray[i]});
+  })
+}
+
+let unsubscribePromise = new Promise((resolve, reject)=>{
+  let request;
+  for (let i = 0; i < emailArray.length; i++) {
+    new Promise((res, rej)=>{
+      let options = {
+        url: endpoint, //https://api.careerbuilder.com/core/bounce/hard
+        headers: { Authorization: "Bearer" + token, "request- id": _requestId },
+        json: true,
+        body: { Email: emailArray[i] }, //JSON.stringify might be used,
+        method: 'POST'
+      };
+
+      res(options);
+
+    }).then((val)=>{
+      request = http.request(val, (res)=> {//request variable has higher scope in this method
+        console.log('STATUS: ' + res.statusCode);
+        console.log('HEADERS: ' + JSON.stringify(res.headers));
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+          console.log('BODY: ' + chunk);
+        });
+      });
+      
+    }).then(()=>{
+      request.on('error', (e)=>{
+        console.log('problem with request: ' + e.message);
+      });
+    }).catch((error)=>{
+      reject({message:`failed for email ${emailArray[i]}`, Error : error})
+    })
+  
+    resolve({"done with email" : emailArray[i]});
+  }
+})
 
 function uploadXml(path, data) {
   return new Promise((resolve, reject) => {
@@ -63,10 +157,10 @@ function uploadXml(path, data) {
         Key: path,
         Body: data
       },
-      function(err, res) {
+      function (err, res) {
         if (err) {
           console.log("ERRR");
-           reject(false);
+          reject(false);
         } else {
           console.log(path);
           console.log("DONE " + res);
@@ -87,7 +181,7 @@ function updateXML(data) {
     new RegExp(/<url><\?xml\sversion\=\'1\.0\'\?>\n<url>/g),
     "<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>"
   );
-  data = data.replace(new RegExp(/<\/url>\n<\/url>/g) , "</url></urlset>");
+  data = data.replace(new RegExp(/<\/url>\n<\/url>/g), "</url></urlset>");
   data = data.replace(new RegExp(/<url>\n.{1,}<url>/g), "<urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'><url>");
 
   return data;
@@ -101,9 +195,9 @@ async function prepareXML(res) {
   let prepData = csvjson.toObject(res.Body.toString(), options);
   prepData.map(item => {
     item.loc = "https://www.careerbuilder.com/job/" + item.loc;
-    item.lastmod = moment.tz(item.lastmod,'America/New_York').format()
+    item.lastmod = moment.tz(item.lastmod, 'America/New_York').format()
     // .format();
-    
+
   });
   let arr = [];
   const count = prepData.length;
@@ -115,7 +209,7 @@ async function prepareXML(res) {
     "<sitemapindex xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>";
   for (index = 0; index < arr.length; index++) {
     console.log(index);
-    
+
     let feed = arr[index];
     let path = "xml/" + index + ".xml";
     sitemapContent +=
@@ -126,11 +220,11 @@ async function prepareXML(res) {
     await uploadXml(path, t);
   }
   sitemapContent += "</sitemapindex>";
-console.log('check');
-  
+  console.log('check');
+
   await uploadXml("xml/job-sitemap.xml", sitemapContent);
 }
-exports.handler = async function(context) {
+exports.handler = async function (context) {
   await controller();
   return context.logStreamName;
 };
