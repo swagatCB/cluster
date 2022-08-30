@@ -17,7 +17,7 @@
     "js2xmlparser": "^4.0.0",
     "jsontoxml": "^1.0.1",
     "moment": "^2.24.0",
-    "moment-timezone": "^0.5.26",
+    "moment-timezone": "^0.5.35",
     "os": "^0.1.1"
   }
 }
